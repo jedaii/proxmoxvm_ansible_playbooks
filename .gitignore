@@ -1,0 +1,5 @@
+.pytest_cache
+vms.yml
+inventory
+pve.yml
+.vscode

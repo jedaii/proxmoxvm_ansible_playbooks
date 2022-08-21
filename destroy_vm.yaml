@@ -1,0 +1,27 @@
+---
+- name: Removing VM
+  hosts: all
+  vars_files:
+    - vms.yml
+    - pve.yml
+  tasks:
+    - name: Stop VM with force
+      community.general.proxmox_kvm:
+        api_user    : "{{ api_user }}"
+        api_password: "{{ api_password }}"
+        api_host    : "{{ api_host }}"
+        name        : "{{ item['name'] }}"
+        node        : "{{ node }}"
+        state       : stopped
+        force       : yes
+      with_items: "{{ vms }}"
+    
+    - name: Remove VM
+      community.general.proxmox_kvm:
+        api_user    : "{{ api_user }}"
+        api_password: "{{ api_password }}"
+        api_host    : "{{ api_host }}"
+        name        : "{{ item['name'] }}"
+        node        : "{{ node }}"
+        state       : absent
+      with_items: "{{ vms }}"
