@@ -1,0 +1,53 @@
+---
+- name: Initial setup VM
+  hosts: all
+  vars_files:
+    - vms.yml
+    - pve.yml
+  tasks:
+    - name: Clone VM
+      community.general.proxmox_kvm:
+        node:         "{{ node }}"
+        storage:      "{{ storage }}"
+        name:         "{{ item['name'] }}"
+        newid:        "{{ item['vmid'] }}"
+        api_user:     "{{ api_user }}"
+        api_password: "{{ api_password }}"
+        api_host:     "{{ api_host }}"
+        clone:        "{{ clone_vm }}"
+        full: yes
+        timeout: 500
+      with_items: "{{ vms }}"
+
+    - name: Set IP address
+      command: "qm set {{ item['vmid'] }}  --ipconfig0 ip={{ item['ipaddress'] }}"
+      # loop: "{{ lookup('ansible.builtin.dict', vms) }}"
+      with_items: "{{ vms }}"
+
+    - name: Copy SSH key
+      command: "qm set {{ item['vmid'] }} --sshkey {{ key_name }}"
+      with_items: "{{ vms }}"
+
+    - name: Update VM
+      community.general.proxmox_kvm:
+        api_host:     "{{ api_host }}"
+        api_user:     "{{ api_user }}"
+        api_password: "{{ api_password }}"
+        cores:        "{{ item['cores'] }}"
+        sockets:      "{{ item['sockets'] }}"
+        memory:       "{{ item['memory'] }}"
+        update:       yes
+        vmid:         "{{ item['vmid'] }}"
+        node:         "{{ node }}"
+        name:         "{{ item['name'] }}"
+      with_items: "{{ vms }}"
+
+    - name: Start VMs
+      community.general.proxmox_kvm:
+        api_host:     "{{ api_host }}"
+        api_password: "{{ api_password }}"
+        api_user:     "{{ api_user }}"
+        vmid:         "{{ item['vmid'] }}"
+        node:         "{{ node }}"
+        state:        started
+      with_items: "{{ vms }}"
